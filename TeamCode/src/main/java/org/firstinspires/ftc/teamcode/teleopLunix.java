@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.pedro;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -17,7 +17,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
  *   RightFront -> Expansion Hub motor port 0
  *   RightBack  -> Expansion Hub motor port 1
  */
-@TeleOp(name = "lunixTeleop", group = "Drive")
+@TeleOp(name = "teleopLunix", group = "Drive")
 public class teleopLunix extends LinearOpMode {
 
     private DcMotor frontLeftMotor;
@@ -62,7 +62,7 @@ public class teleopLunix extends LinearOpMode {
             double lb = ((drive - strafe + turn) / scale);
             double rf = ((drive - strafe - turn) / scale);
             double rb = (drive + strafe - turn) / scale;
-            double speed = 0.5;
+            double speed = 0.6;
 
             frontLeftMotor.setPower(lf * speed);
             backLeftMotor.setPower(lb  * speed);
