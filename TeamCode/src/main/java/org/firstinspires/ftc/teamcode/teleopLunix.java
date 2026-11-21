@@ -12,56 +12,59 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
  * Right stick : turn (X)
  *
  * Extra motors (gamepad1, PlayStation):
- *   Motor 1: Square = forward, Circle = backwards
- *   Motor 2: Triangle = forward, Cross = backwards
- *   Motor 3: R2 = forwards (analog)
+ *   Intake: R2 = forward, L2 = backwards (analog)
+ *   Indexer: Triangle = forward, Cross = backwards
+ *   Shooter: Square = forwards
  */
 @TeleOp(name = "teleopLunix", group = "Drive")
 public class teleopLunix extends LinearOpMode {
 
-    private DcMotor frontLeftMotor;
-    private DcMotor backLeftMotor;
-    private DcMotor frontRightMotor;
-    private DcMotor backRightMotor;
+    // Drive motors — named after the config device they read (see header).
+    private DcMotor backRightMotor;   // physical front-left wheel
+    private DcMotor frontRightMotor;  // physical back-left wheel
+    private DcMotor frontLeftMotor;   // physical front-right wheel
+    private DcMotor backLeftMotor;    // physical back-right wheel
 
-    // 3 extra motors (same model as the drive motors).
-    private DcMotor shooter;
-    private DcMotor indexer;
+    // Extra motors — named after the mechanism they actually control.
     private DcMotor intake;
+    private DcMotor indexer;
+    private DcMotor shooter;
 
     @Override
     public void runOpMode() {
-        // Corrected order: each variable reads the config name that actually
-        // reaches the physical motor it is named for (see header comment).
-        frontLeftMotor  = hardwareMap.get(DcMotor.class, "backRightMotor");
-        backLeftMotor   = hardwareMap.get(DcMotor.class, "frontRightMotor");
-        frontRightMotor = hardwareMap.get(DcMotor.class, "frontLeftMotor");
-        backRightMotor  = hardwareMap.get(DcMotor.class, "backLeftMotor");
+        backRightMotor  = hardwareMap.get(DcMotor.class, "backRightMotor");
+        frontRightMotor = hardwareMap.get(DcMotor.class, "frontRightMotor");
+        frontLeftMotor  = hardwareMap.get(DcMotor.class, "frontLeftMotor");
+        backLeftMotor   = hardwareMap.get(DcMotor.class, "backLeftMotor");
 
-        // Directions belong to the physical motors: left FORWARD, right REVERSE.
-        frontLeftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        backLeftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        // Directions belong to the physical motors: the physical left wheels
+        // (backRightMotor, frontRightMotor) are FORWARD, the physical right
+        // wheels (frontLeftMotor, backLeftMotor) are REVERSE.
+        backRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        backRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Extra motors — change the names to match your Robot Controller config.
-        intake = hardwareMap.get(DcMotor.class, "shooter");
+        // Extra motors — the config names for intake and shooter are swapped
+        // (see header): intake reads "shooter", shooter reads "intake".
+        shooter  = hardwareMap.get(DcMotor.class, "shooter");
         indexer = hardwareMap.get(DcMotor.class, "indexer");
-        shooter = hardwareMap.get(DcMotor.class, "intake");
+        intake = hardwareMap.get(DcMotor.class, "intake");
 
-        // If a motor spins the wrong way, flip that motor's direction here.
-        shooter.setDirection(DcMotorSimple.Direction.FORWARD);
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
         indexer.setDirection(DcMotorSimple.Direction.FORWARD);
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        // Shooter direction is INVERTED (REVERSE) — it spins the right way
+        // for shooting only with the direction flipped.
+        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        indexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        indexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -83,38 +86,39 @@ public class teleopLunix extends LinearOpMode {
             double rb = (drive + strafe - turn) / scale;
 
             // No speed cap on drive/turn — full stick is 1.0 (strafe is halved above).
-            frontLeftMotor.setPower(lf);
-            backLeftMotor.setPower(lb);
-            frontRightMotor.setPower(rf);
-            backRightMotor.setPower(rb);
+            // Variables are named after the config device; the comments say
+            // which physical wheel each one is.
+            backRightMotor.setPower(lf);   // physical front-left
+            frontRightMotor.setPower(lb);  // physical back-left
+            frontLeftMotor.setPower(rf);   // physical front-right
+            backLeftMotor.setPower(rb);    // physical back-right
 
             // Extra motors — PlayStation controller (gamepad1).
-            // Motor 1: Square = forward, Circle = backwards.
-            double shooterPower = 0;
-            if (gamepad1.x) {        // Square
-                shooterPower = 1.0;
-            } else if (gamepad1.b) { // Circle
-                shooterPower = -1.0;
-            }
-            shooter.setPower(shooterPower);
+            // Intake: R2 = forward, L2 = backwards (analog — speed follows
+            // how far you press each trigger; pressing both cancels out).
+            double intakePower = gamepad1.right_trigger - gamepad1.left_trigger;
+            intake.setPower(intakePower);
 
-            // Motor 2: Triangle = forward, Cross = backwards.
+            // Indexer: Triangle = forward, Cross = backwards.
             double indexerPower = 0;
-            if (gamepad1.y) {        // Triangle
+            if (gamepad1.x) {        // Triangle
                 indexerPower = 1.0;
             } else if (gamepad1.a) { // Cross
                 indexerPower = -1.0;
             }
             indexer.setPower(indexerPower);
 
-            // Motor 3: R2 = forwards, speed follows how far you press the trigger.
-            double intakePower = gamepad1.right_trigger;
-            intake.setPower(intakePower);
+            // Shooter: Square = forwards.
+            double shooterPower = 0;
+            if (gamepad1.b) { // Square
+                shooterPower = 1.0;
+            }
+            shooter.setPower(shooterPower);
 
             telemetry.addData("Drive / Strafe / Turn", "%.2f / %.2f / %.2f", drive, strafe, turn);
             telemetry.addData("LF / LB", "%.2f / %.2f", lf, lb);
             telemetry.addData("RF / RB", "%.2f / %.2f", rf, rb);
-            telemetry.addData("Motors 1 / 2 / 3", "%.2f / %.2f / %.2f", shooterPower, indexerPower, intakePower);
+            telemetry.addData("Intake / Indexer / Shooter", "%.2f / %.2f / %.2f", intakePower, indexerPower, shooterPower);
             telemetry.update();
         }
     }
